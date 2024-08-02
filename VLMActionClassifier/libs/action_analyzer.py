@@ -1,32 +1,30 @@
 import ollama
 import glob
 import os
+import time
 
 def action_analyzer_prompt():
     prompt = """
-あなたはサッカーの試合映像からプレイヤーのアクションを分析する能力を持っています。
-サッカーの試合映像を見て、プレイヤーのアクションが以下のリストのどのアクションに該当するかを分析してください。
-もし、アクションが上記のいずれにも該当しない場合は、「その他」と出力してください。
-出力は単語のみです。
+You have the ability to analyze player actions from soccer match footage. Please watch the soccer match footage and analyze which action from the following list the player is performing. If the action does not fall under any of the categories listed above, output "Other." The output must be a single word only.
 
-アクションの種類は以下の通りです：
+The types of actions are as follows:
 
-1. パス
-2. シュート
-3. クロス
-4. ドリブル
-5. 成功したタックル
-6. ロングパス
-7. ヘディング
-8. その他
+- Pass
+- Shoot
+- Cross
+- Dribble
+- Successful Tackle
+- Long Pass
+- Header
+- Other
 
-該当するアクションを出力してください。出力形式の例は以下を参照してください。
-===例===
+Please output the corresponding action. The output must be a single word only.
+===Example===
 <output>
-シュート
-===例の終わり===
+Shoot
+===End of Example===
 
-それでは始めましょう！
+Let's begin!
 <output>
 """
 
@@ -66,4 +64,8 @@ def main():
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     main()
+    end_time = time.time()
+    elapsed_time = end_time - start_time  # 経過時間を計算
+    print(f"main() 関数の処理時間: {elapsed_time:.6f} 秒")
