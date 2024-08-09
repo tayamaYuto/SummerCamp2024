@@ -10,15 +10,20 @@ import matplotlib.pyplot as plt
 import os
 from util.io import load_json
 
+from original_src.logger_config import logger
+
 
 def parse_ground_truth(truth):
     label_dict = defaultdict(lambda: defaultdict(list))
     
     for x in truth:
-        events = x['events']
+        events = x['annotations']
         for e in events:
-            frame = e['frame']
-            label_dict[e['label']][x['video']].append(frame)
+            fps = 25
+            frame_duration = 1000 / fps
+            frame = int(e['position']) / int(frame_duration)
+            frame = int(frame)
+            label_dict[e['label']][x['UrlLocal']].append(frame)
     
     return label_dict
 
@@ -92,7 +97,7 @@ def compute_mAPs(
     #vid_names = [d['video'] for d in pred]
     #truth = [d for d in truth if d['video'] in vid_names]
 
-    assert {v['video'] for v in truth} == {v['video'] for v in pred}, \
+    assert {v['UrlLocal'] for v in truth} == {v['video'] for v in pred}, \
         'Video set mismatch!'
     
 

@@ -214,7 +214,7 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
     
     h = 0
     for clip in tqdm(DataLoader(
-            dataset, num_workers=4 * 2, pin_memory=True,
+            dataset, num_workers=1 * 2, pin_memory=True,
             batch_size=batch_size
     )):
             

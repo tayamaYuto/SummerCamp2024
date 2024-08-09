@@ -27,7 +27,7 @@ def video2frame(video_path, output_folder):
 
 def main():
     video_path = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/West/720p.mp4"
-    output_folder = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/data_folder"
+    output_folder = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/data_folder/West"
 
     video2frame(video_path=video_path, output_folder=output_folder)
 

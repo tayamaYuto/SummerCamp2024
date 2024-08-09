@@ -17,7 +17,7 @@ from tqdm import tqdm
 import pickle
 
 #Local imports
-
+from original_src.logger_config import logger
 
 #Constants
 
@@ -43,13 +43,13 @@ class ActionSpotDataset(Dataset):
             mixup=False,                # Mixup usage
             pad_len=DEFAULT_PAD_LEN,    # Number of frames to pad the start
                                         # and end of videos
-            dataset = 'finediving'         # Dataset name
+            dataset = 'soccernet'         # Dataset name
     ):
         self._src_file = label_file
         self._labels = load_json(label_file)
         self._split = label_file.split('/')[-1].split('.')[0]
         self._class_dict = classes
-        self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
+        self._video_idxs = {x['UrlLocal']: i for i, x in enumerate(self._labels)}
         self._dataset = dataset
         self._store_dir = store_dir
         self._store_mode = store_mode
@@ -59,7 +59,12 @@ class ActionSpotDataset(Dataset):
         self._stride = stride
         assert stride > 0
         if overlap != 1:
-            self._overlap = int((1-overlap) * clip_len)
+            logger.debug(f"clip_len: {clip_len}")
+            
+            overlap = round(overlap, 2)
+            logger.debug(f"overlap: {overlap}")
+            self._overlap = round((1-overlap) * clip_len)
+            logger.debug(f"self._overlap: {self._overlap}")
         else:
             self._overlap = 1
         assert overlap >= 0 and overlap <= 1
@@ -94,18 +99,22 @@ class ActionSpotDataset(Dataset):
         for video in tqdm(self._labels):
             video_len = int(video['num_frames'])
 
-            labels_file = video['events']
+            labels_file = video["annotations"]
 
             for base_idx in range(-self._pad_len * self._stride, max(0, video_len - 1 + (2 * self._pad_len - self._clip_len) * self._stride), self._overlap):
 
-                frames_paths = self._frame_reader.load_paths(video['video'], base_idx, base_idx + self._clip_len * self._stride, stride=self._stride)
+                frames_paths = self._frame_reader.load_paths(video['UrlLocal'], base_idx, base_idx + self._clip_len * self._stride, stride=self._stride)
+                logger.debug(f"frames_paths: {frames_paths}")
                 
                 labels = []
                 if self._radi_displacement > 0:
                     labelsD = []
                 for event in labels_file:
-                    event_frame = event['frame']
+                    fps = 25
+                    frame_duration = 1000 / fps
+                    event_frame = int(event['position']) / int(frame_duration)
                     label_idx = (event_frame - base_idx) // self._stride
+                    label_idx = int(label_idx)
 
                     if self._radi_displacement > 0:
                         if (label_idx >= -self._radi_displacement and label_idx < self._clip_len + self._radi_displacement):
@@ -159,6 +168,7 @@ class ActionSpotDataset(Dataset):
 
         #Get frame_path and labels dict
         frames_path = self._frame_paths[idx]
+        logger.debug(f"frames_path: {frames_path}")
         dict_label = self._labels_store[idx]
         if self._radi_displacement > 0:
             dict_labelD = self._labelsD_store[idx]
@@ -212,11 +222,11 @@ class FrameReader:
         self.dataset = dataset
 
     def read_frame(self, frame_path):
+        logger.debug(f"frame_path: {frame_path}")
         img = torchvision.io.read_image(frame_path) #.float() / 255 -> into model normalization / augmentations
         return img
     
     def load_paths(self, video_name, start, end, stride=1, source_info = None):
-
         if self.dataset == 'finediving':
             video_name = video_name.replace('__', '/')
             path = os.path.join(self._frame_dir, video_name)
@@ -242,9 +252,10 @@ class FrameReader:
                 frame_path = os.path.join(path, str(frame).zfill(ndigits) + '.jpg')
                 base_path = path
 
-            elif (self.dataset == 'fs_comp') | (self.dataset == 'fs_perf'):
+            elif (self.dataset == 'fs_comp') | (self.dataset == 'fs_perf') | (self.dataset == 'soccernet'):
                 frame = frame_num
                 frame_path = os.path.join(self._frame_dir, video_name, 'frame' + str(frame) + '.jpg')
+                logger.debug(f"frame_path: {frame_path}")
                 base_path = os.path.join(self._frame_dir, video_name)
                 ndigits = -1
                 
@@ -260,21 +271,28 @@ class FrameReader:
         return ret
     
     def load_frames(self, paths, pad=False, stride=1):
+        logger.debug(f"paths: {paths}")
         base_path = paths[0]
+        logger.debug(f"base_path: {base_path}")
         start = paths[1]
+        logger.debug(f"start: {start}")
         pad_start = paths[2]
+        logger.debug(f"pad_start: {pad_start}")
         pad_end = paths[3]
         ndigits = paths[4]
+        logger.debug(f"ndigits: {ndigits}")
         length = paths[5]
 
         ret = []
         if ndigits == -1:
             path = os.path.join(base_path, 'frame')
+            _ = [ret.append(self.read_frame(path + str(start + j * stride) + '.jpg')) for j in range(length - pad_start - pad_end)]
 
         else:
             path = base_path + '/'
             _ = [ret.append(self.read_frame(path + str(start + j * stride).zfill(ndigits) + '.jpg')) for j in range(length - pad_start - pad_end)]
 
+        logger.debug(f"ret: {ret}")
         ret = torch.stack(ret, dim=int(len(ret[0].shape) == 4))
 
         # Always pad start, but only pad end if requested
@@ -297,12 +315,12 @@ class ActionSpotVideoDataset(Dataset):
             overlap_len=0,
             stride=1,
             pad_len=DEFAULT_PAD_LEN,
-            dataset = 'finediving'
+            dataset = 'soccernet'
     ):
         self._src_file = label_file
         self._labels = load_json(label_file)
         self._class_dict = classes
-        self._video_idxs = {x['video']: i for i, x in enumerate(self._labels)}
+        self._video_idxs = {x['UrlLocal']: i for i, x in enumerate(self._labels)}
         self._clip_len = clip_len
         self._stride = stride
         self._dataset = dataset
@@ -314,12 +332,12 @@ class ActionSpotVideoDataset(Dataset):
             has_clip = False
             for i in range(
                 -pad_len * self._stride,
-                max(0, l['num_frames'] - (overlap_len * stride)), \
+                max(0, int(l['num_frames']) - (overlap_len * stride)), \
                 # Need to ensure that all clips have at least one frame
                 (clip_len - overlap_len) * self._stride
             ):
                 has_clip = True
-                self._clips.append((l['video'], i))
+                self._clips.append((l['UrlLocal'], i))
             assert has_clip, l
 
     def __len__(self):
@@ -337,27 +355,30 @@ class ActionSpotVideoDataset(Dataset):
 
     def get_labels(self, video):
         meta = self._labels[self._video_idxs[video]]
-        labels_file = meta['events']
+        labels_file = meta['annotations']
         
-        num_frames = meta['num_frames']
+        num_frames = int(meta['num_frames'])
         num_labels = num_frames // self._stride
 
         if num_frames % self._stride != 0:
             num_labels += 1
         labels = np.zeros(num_labels, np.int64)
         for event in labels_file:
-            frame = event['frame']
+            fps = 25
+            frame_duration = 1000 / fps
+            frame = int(event['position']) / int(frame_duration)
+            frame = int(frame)
             if frame < num_frames:
                 labels[frame // self._stride] = self._class_dict[event['label']]
             else:
                 print('Warning: {} >= {} is past the end {}'.format(
-                    frame, num_frames, meta['video']))
+                    frame, num_frames, meta['UrlLocal']))
         return labels
 
     @property
     def videos(self):
         return sorted([
-            (v['video'], v['num_frames'] // self._stride,
+            (v['UrlLocal'], int(v['num_frames']) // self._stride,
             v['fps'] / self._stride) for v in self._labels])
 
     @property
@@ -373,15 +394,18 @@ class ActionSpotVideoDataset(Dataset):
                 x_copy['fps'] /= self._stride
                 x_copy['num_frames'] //= self._stride
                 
-                for e in x_copy['events']:
-                    e['frame'] //= self._stride
+                for e in x_copy['annotations']:
+                    fps = 25
+                    frame_duration = 1000 / fps
+                    frame = e['position'] / frame_duration
+                    frame //= self._stride
 
                 labels.append(x_copy)
             return labels
 
     def print_info(self):
         num_frames = sum([x['num_frames'] for x in self._labels])
-        num_events = sum([len(x['events']) for x in self._labels])
+        num_events = sum([len(x['annotations']) for x in self._labels])
         print('{} : {} videos, {} frames ({} stride), {:0.5f}% non-bg'.format(
             self._src_file, len(self._labels), num_frames, self._stride,
             num_events / num_frames * 100))
@@ -420,7 +444,7 @@ class FrameReaderVideo:
             if self._dataset == 'finediving':
                 frame_path = os.path.join(path, str(frame0 + frame_num).zfill(ndigits) + '.jpg')
 
-            elif (self._dataset == 'fs_comp') or (self._dataset == 'fs_perf'):
+            elif (self._dataset == 'fs_comp') or (self._dataset == 'fs_perf') or (self._dataset == 'soccernet'):
                 frame_path = os.path.join(
                     self._frame_dir, video_name, 'frame' + str(frame_num) + '.jpg'
                 )
@@ -447,8 +471,8 @@ class FrameReaderVideo:
 
 
 def _print_info_helper(src_file, labels):
-        num_frames = sum([x['num_frames'] for x in labels])
-        num_events = sum([len(x['events']) for x in labels])
+        num_frames = sum([int(x['num_frames']) for x in labels])
+        num_events = sum([len(x['annotations']) for x in labels])
         print('{} : {} videos, {} frames, {:0.5f}% non-bg'.format(
             src_file, len(labels), num_frames,
             num_events / num_frames * 100))
