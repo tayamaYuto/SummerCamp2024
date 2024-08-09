@@ -1,2 +1,3 @@
 .env
 data/soccernet
+checkpoints/SoccerNet
