@@ -15,6 +15,7 @@ from torch.utils.data import Dataset
 import torchvision
 from tqdm import tqdm
 import pickle
+import cv2
 
 #Local imports
 from original_src.logger_config import logger

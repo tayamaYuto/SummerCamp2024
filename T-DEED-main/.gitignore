@@ -1,3 +1,4 @@
 .env
 data/soccernet
 checkpoints/SoccerNet
+data/West
