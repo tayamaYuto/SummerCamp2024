@@ -14,7 +14,7 @@
     "mixup": true,
     "modality": "rgb",
     "num_classes": 4,
-    "num_epochs": 50,
+    "num_epochs": 5,
     "warm_up_epochs": 3,
     "start_val_epoch": 30,
     "temporal_arch": "ed_sgp_mixer",

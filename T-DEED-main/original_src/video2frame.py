@@ -26,8 +26,8 @@ def video2frame(video_path, output_folder):
     print(f'合計{frame_count}フレームが保存されました')
 
 def main():
-    video_path = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/2019-2020/2019-10-01 - Blackburn Rovers - Nottingham Forest/720p.mp4"
-    output_folder = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/frame_data/2019-10-01 - Blackburn Rovers - Nottingham Forest"
+    video_path = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/2019-2020/2019-10-01 - Hull City - Sheffield Wednesday/720p.mp4"
+    output_folder = "/home/yuto/SummerCamp2024/T-DEED-main/data/soccernet/frame_data/2019-10-01 - Hull City - Sheffield Wednesday"
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)

@@ -6,7 +6,7 @@ def main():
         data = json.load(file)
     
     train_ratio = 0.8
-    validation_ratio = 0.2
+    validation_ratio = 0.1
     
     train_data = []
     validation_data = []
