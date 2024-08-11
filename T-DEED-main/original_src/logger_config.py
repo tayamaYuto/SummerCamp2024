@@ -8,7 +8,7 @@ logger.setLevel(logging.DEBUG)  # ログレベルの設定
 if not logger.hasHandlers():
     # コンソールへの出力設定
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)  # コンソール用のログレベル設定
+    console_handler.setLevel(logging.INFO)  # コンソール用のログレベル設定
 
     # ログフォーマットの設定
     formatter = logging.Formatter('%(filename)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s')
