@@ -55,8 +55,9 @@ python original_src/insert_video_info.py
 ```
 更新されたjsonファイルを以下のフォルダで配置
 
-アノテーションデータ
+```
 data/soccernet/2019-2020-json/(任意の名前).json, (任意の名前2).json, ...
+```
 
 jsonデータ配置後、以下のコマンドを実施
 このスクリプトの実行で複数試合のjsonが1つのjsonファイルになります
