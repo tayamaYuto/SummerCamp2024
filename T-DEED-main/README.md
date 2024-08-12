@@ -2,9 +2,13 @@
 
 ### 動作環境
 RTX 3060
+
 VRAM 12GB
-WSL2 20.04
+
+WSL2 Ubuntu:20.04
+
 CUDA 12.1
+
 Driver Version: 536.23
 
 ### パッケージインストール
