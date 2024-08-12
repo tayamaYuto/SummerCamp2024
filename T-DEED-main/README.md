@@ -76,6 +76,8 @@ python original_src/frame2video.py --game_name "2019-10-01 - Blackburn Rovers - 
 
 ### 学習
 
+学習前にcheckpoints/SoccerNet/SoccerNetフォルダを作成する必要あるかもです
+フォルダ作成後、以下を入力して学習開始
 ```bash
 python train_tdeed.py --model SoccerNet
 ```
