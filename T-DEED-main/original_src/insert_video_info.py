@@ -24,11 +24,11 @@ def insert_info_to_json(json_path, fps, num_frames, game) -> None:
         data = json.load(f)
 
     # デフォルトのときはこれ
-    # url_local_value = data["UrlLocal"]
-    # extracted_value = url_local_value.split('/')[-1]
+    url_local_value = data["UrlLocal"]
+    extracted_value = url_local_value.split('/')[-1]
     
     ordered_data = OrderedDict()
-    ordered_data["UrlLocal"] = data["UrlLocal"]
+    ordered_data["UrlLocal"] = extracted_value #data["UrlLocal"]
     ordered_data["fps"] = int(fps)
     ordered_data["num_frames"] = f"{num_frames}"
     ordered_data["annotations"] = data["annotations"]

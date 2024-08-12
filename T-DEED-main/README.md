@@ -1,72 +1,86 @@
-# T-DEED
-### T-DEED: Temporal-Discriminability Enhancer Encoder-Decoder for Precise Event Spotting in Sports Videos (CVsports '24)
-<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
-[![arXiv](https://img.shields.io/badge/arXiv-2404.05392-red)](https://arxiv.org/abs/2404.05392)
-[![ProjectPage](https://img.shields.io/badge/Project%20Page-green)](https://arturxe2.github.io/projects/T-DEED/)
+# 合宿用T-DEED動かし方
 
-This repository contains the PyTorch implementation of the paper:
+### 動作環境
+RTX 3060
+VRAM 12GB
+WSL2 20.04
+CUDA 12.1
+Driver Version: 536.23
 
-**T-DEED: Temporal-Discriminability Enhancer Encoder-Decoder for Precise Event Spotting in Sports Videos**<br>
-*Artur Xarles, Sergio Escalera, Thomas B. Moeslund, and Albert Clapés*<br>
-**10th International Workshop on Computer Vision in Sports (CVsports) at CVPR 2024**<br>
+### パッケージインストール
 
-
-## Overview
-
-This repository contains the code for T-DEED: Temporal-Discriminability Enhancer Encoder-Decoder for Precise Event Spotting. It builds upon the codebase from [E2E-Spot](https://github.com/jhong93/spot), and we extend our gratitude for their work.
-
-## Environment
-
-You can install the required packages for the project using the following command, with `requirements.txt` specifying the versions of the various packages:
-
+仮想環境の作成
+```bash
+python -m venv .env  # .envは任意の名前
 ```
+
+仮想環境に入る
+```bash
+source .env/bin/activate
+```
+
+必要パッケージのinstall
+```bash
 pip install -r requirements.txt
 ```
 
-## Data
+### データの配置と前準備
+映像データ
+data/soccernet/2019-2020/各試合名のフォルダ/720p.mp4 + labels-ball.json
 
-Refer to the README files in the [data](/data/) directory for pre-processing and setup instructions. 
-
-
-## Execution
-
-The `train_tdeed.py` file is designed to train and evaluate T-DEED based on the settings specified in the chosen configuration file. You can execute the file using the following command:
-
+この配置をしてから以下を実行（T-DEED実行に必要なkeyとvalueを追加）
+```bash
+python original_src/insert_video_info.py
 ```
-python3 train_tdeed.py --model <model_name>
-```
-
-Here, `<model_name>` follows the format `<dataset>_<name>`, where `<dataset>` is one of the three possible datasets (FigureSkatingComp, FigureSkatingPerf, or FineDiving), and `<name>` can be chosen freely but must match the name specified in the configuration file located in the config directory.
-
-For example, to use the FineDiving dataset with the small model (200MF), you would run:
-
-```
-python3 train_tdeed.py --model FineDiving_small
-```
-
-You can control whether to train the whole model or just evaluate it using the `only_test` parameter in the configuration file. For additional details on configuration options, refer to the README in the [config](/config/) directory.
-
-## Trained models
-
-Model checkpoints can be found at this [link](https://drive.google.com/drive/folders/1sxZalU_hCwL8ITZCU9VqSWE8dB94lJty?usp=drive_link), and configurations are available in the [config](/config/) directory. To use the checkpoints, place the checkpoint file in the [checkpoints](/checkpoints/) directory, maintaining the same structure as shown with `FineDiving_small`.
-
-*There has been a slight improvement in the results of some datasets compared to those reported in the paper.\
-**Note: Some results may slightly vary from those reported in the paper, as the paper's results are the average of two executions with different seeds, while here we only include one of the model's checkpoints.
-
-## Contact
-
-If you have any questions related to the code, feel free to contact arturxe@gmail.com.
-
-## References
-
-If you find our work useful, please consider citing our paper.
-```
-@InProceedings{Xarles_2024_CVPR,
-    author    = {Xarles, Artur and Escalera, Sergio and Moeslund, Thomas B. and Clap\'es, Albert},
-    title     = {T-DEED: Temporal-Discriminability Enhancer Encoder-Decoder for Precise Event Spotting in Sports Videos},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-    month     = {June},
-    year      = {2024},
-    pages     = {3410-3419}
+実行後、jsonデータがこのようになっていたらOKです
+```json
+{
+    "UrlLocal": "2019-10-01 - Blackburn Rovers - Nottingham Forest",
+    "fps": 25,
+    "num_frames": "142887",
+    "annotations": [
+        {
+            "gameTime": "1 - 00:00",
+            "label": "PASS",
+            "position": "680",
+            "team": "away",
+            "visibility": "visible"
+        }
+    ]
 }
 ```
+更新されたjsonファイルを以下のフォルダで配置
+
+アノテーションデータ
+data/soccernet/2019-2020-json/(任意の名前).json, (任意の名前2).json, ...
+
+jsonデータ配置後、以下のコマンドを実施
+このスクリプトの実行で複数試合のjsonが1つのjsonファイルになります
+```bash
+python original_src/concat_json.py
+```
+次にsplit_json_dataスクリプトを実行して、訓練、検証、テストに分割
+
+```bash
+python original_src/split_json_data.py
+```
+
+最後に動画をフレームに分割（1つ1つ実行する必要があります）
+
+```bash
+python original_src/frame2video.py --game_name "2019-10-01 - Blackburn Rovers - Nottingham Forest"
+```
+
+実行後、data/soccernet/frame_folder/試合名のフォルダにフレームデータが入っています（1動画あたりおおよそ15万フレーム：30GB）
+
+
+### 学習
+
+```bash
+python train_tdeed.py --model SoccerNet
+```
+
+学習時の設定はconfig/SoccerNet/SoccerNet.jsonで指定可能
+
+
+
