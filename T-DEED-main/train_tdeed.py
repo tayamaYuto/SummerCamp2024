@@ -21,6 +21,7 @@ from torch.optim.lr_scheduler import (
     ChainedScheduler, LinearLR, CosineAnnealingLR)
 from util.eval import evaluate
 from dataset.frame import ActionSpotVideoDataset
+from original_src.logger_config import logger
 
 
 #Constants
@@ -126,6 +127,7 @@ def main(args):
 
     if not args.only_test:
         # Warmup schedule
+        logger.info(f"len train_loader : {len(train_loader)}")
         num_steps_per_epoch = len(train_loader) // args.acc_grad_iter
         num_epochs, lr_scheduler = get_lr_scheduler(
             args, optimizer, num_steps_per_epoch)

@@ -169,7 +169,6 @@ class ActionSpotDataset(Dataset):
 
         #Get frame_path and labels dict
         frames_path = self._frame_paths[idx]
-        logger.debug(f"frames_path: {frames_path}")
         dict_label = self._labels_store[idx]
         if self._radi_displacement > 0:
             dict_labelD = self._labelsD_store[idx]
@@ -256,7 +255,6 @@ class FrameReader:
             elif (self.dataset == 'fs_comp') | (self.dataset == 'fs_perf') | (self.dataset == 'soccernet'):
                 frame = frame_num
                 frame_path = os.path.join(self._frame_dir, video_name, 'frame' + str(frame) + '.jpg')
-                logger.debug(f"frame_path: {frame_path}")
                 base_path = os.path.join(self._frame_dir, video_name)
                 ndigits = -1
                 
@@ -272,16 +270,12 @@ class FrameReader:
         return ret
     
     def load_frames(self, paths, pad=False, stride=1):
-        logger.debug(f"paths: {paths}")
         base_path = paths[0]
-        logger.debug(f"base_path: {base_path}")
         start = paths[1]
         logger.debug(f"start: {start}")
         pad_start = paths[2]
-        logger.debug(f"pad_start: {pad_start}")
         pad_end = paths[3]
         ndigits = paths[4]
-        logger.debug(f"ndigits: {ndigits}")
         length = paths[5]
 
         ret = []
@@ -293,7 +287,7 @@ class FrameReader:
             path = base_path + '/'
             _ = [ret.append(self.read_frame(path + str(start + j * stride).zfill(ndigits) + '.jpg')) for j in range(length - pad_start - pad_end)]
 
-        logger.debug(f"ret: {ret}")
+
         ret = torch.stack(ret, dim=int(len(ret[0].shape) == 4))
 
         # Always pad start, but only pad end if requested

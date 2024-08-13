@@ -15,6 +15,8 @@ import os
 from util.score import compute_mAPs
 from util.io import store_json
 
+from original_src.logger_config import logger
+
 #Constants
 TOLERANCES = [1, 2, 4]
 WINDOWS = [1, 3]
@@ -145,6 +147,7 @@ def non_maximum_supression(pred, window, threshold = 0.0):
                 class_window = window[i]
                 i += 1
             while(len(v) > 0):
+                print(f"Current v size: {len(v)}")
                 e1 = max(v, key=lambda x:x['score'])
                 if e1['score'] < threshold:
                     break
@@ -220,7 +223,9 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
             
         if batch_size > 1:
             # Batched by dataloader
+            logger.debug(f"clip: {clip}")
             _, batch_pred_scores = model.predict(clip['frame'])
+            logger.debug(f"batch_pred_scores: {batch_pred_scores}")
 
             for i in range(clip['frame'].shape[0]):
                 video = clip['video'][i]
