@@ -222,7 +222,6 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
             
         if batch_size > 1:
             # Batched by dataloader
-            logger.info(f"clip: {clip}")
             _, batch_pred_scores = model.predict(clip['frame'])
 
             for i in range(clip['frame'].shape[0]):

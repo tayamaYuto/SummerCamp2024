@@ -17,5 +17,5 @@ def get_total_frames(video_path):
     cap.release()
 
 if __name__ == "__main__":
-    video_path = 'data/soccernet/2019-2020/2019-10-01 - Brentford - Bristol City/720p.mp4'  # ここにビデオファイルのパスを指定
+    video_path = 'data/soccernet/2019-2020/2019-10-01 - Leeds United - West Bromwich/720p.mp4'  # ここにビデオファイルのパスを指定
     get_total_frames(video_path)
