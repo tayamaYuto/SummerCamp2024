@@ -96,8 +96,7 @@ class TDEEDModel(BaseRGBModel):
             ])
 
             #Croping in case of using it
-            # self.croping = args.crop_dim
-            self.croping = None
+            self.croping = args.crop_dim
             if self.croping != None:
                 self.cropT = T.RandomCrop((self.croping, self.croping))
                 self.cropI = T.CenterCrop((self.croping, self.croping))

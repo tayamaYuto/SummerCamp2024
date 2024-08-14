@@ -98,6 +98,7 @@ def main(args):
 
     # Get datasets train, validation (and validation for map -> Video dataset)
     classes, train_data, val_data, val_data_frames = get_datasets(args)
+    print(f"len train_data: {len(train_data)}")
         
     if args.store_mode == 'store':
         print('Datasets have correctly been stored!')

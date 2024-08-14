@@ -15,7 +15,8 @@ def load_video_predictions(game_prediction_dir: Path):
     raw_predictions_npz = np.load(str(raw_predictions_path))
     frame_indexes = raw_predictions_npz["frame_indexes"]
     raw_predictions = raw_predictions_npz["raw_predictions"]
-    print(f"raw_predictions len: {len(raw_predictions)}")
+    print(f"Total Frame: {len(raw_predictions)}")
+    print(frame_indexes)
 
     frame_data = []
 

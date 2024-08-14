@@ -15,7 +15,6 @@ from torch.utils.data import Dataset
 import torchvision
 from tqdm import tqdm
 import pickle
-import cv2
 
 #Local imports
 from original_src.logger_config import logger
@@ -65,7 +64,6 @@ class ActionSpotDataset(Dataset):
             overlap = round(overlap, 2)
             logger.debug(f"overlap: {overlap}")
             self._overlap = round((1-overlap) * clip_len)
-            logger.debug(f"self._overlap: {self._overlap}")
         else:
             self._overlap = 1
         assert overlap >= 0 and overlap <= 1
@@ -105,7 +103,6 @@ class ActionSpotDataset(Dataset):
             for base_idx in range(-self._pad_len * self._stride, max(0, video_len - 1 + (2 * self._pad_len - self._clip_len) * self._stride), self._overlap):
 
                 frames_paths = self._frame_reader.load_paths(video['UrlLocal'], base_idx, base_idx + self._clip_len * self._stride, stride=self._stride)
-                logger.debug(f"frames_paths: {frames_paths}")
                 
                 labels = []
                 if self._radi_displacement > 0:
@@ -222,7 +219,6 @@ class FrameReader:
         self.dataset = dataset
 
     def read_frame(self, frame_path):
-        logger.debug(f"frame_path: {frame_path}")
         img = torchvision.io.read_image(frame_path) #.float() / 255 -> into model normalization / augmentations
         return img
     

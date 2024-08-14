@@ -92,7 +92,7 @@ def compute_average_precision(
 
 
 def compute_mAPs(
-        truth, pred, tolerances=[0, 1, 2, 4], plot_pr=False, printed = False
+        truth, pred, tolerances=[0, 1], plot_pr=False, printed = False
 ):
     #vid_names = [d['video'] for d in pred]
     #truth = [d for d in truth if d['video'] in vid_names]

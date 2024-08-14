@@ -53,22 +53,21 @@ python original_src/insert_video_info.py
     ]
 }
 ```
-更新されたjsonファイルを以下のフォルダで配置
+更新されたjsonファイルについて訓練用で用いるデータを以下のフォルダに配置
 
 ```
 data/soccernet/2019-2020-json/(任意の名前).json, (任意の名前2).json, ...
 ```
+
+
 
 jsonデータ配置後、以下のコマンドを実施
 このスクリプトの実行で複数試合のjsonが1つのjsonファイルになります
 ```bash
 python original_src/concat_json.py
 ```
-次にsplit_json_dataスクリプトを実行して、訓練、検証、テストに分割
 
-```bash
-python original_src/split_json_data.py
-```
+val.jsonやtest.jsonは学習に使用しないデータをtrain.jsonと同じ階層に配置
 
 最後に動画をフレームに分割（1つ1つ実行する必要があります）
 

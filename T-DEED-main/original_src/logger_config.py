@@ -2,7 +2,7 @@ import logging
 
 # ロガーの取得
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # ログレベルの設定
+logger.setLevel(logging.INFO)  # ログレベルの設定
 
 # 既にハンドラーが設定されているか確認
 if not logger.hasHandlers():

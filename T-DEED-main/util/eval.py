@@ -18,7 +18,7 @@ from util.io import store_json
 from original_src.logger_config import logger
 
 #Constants
-TOLERANCES = [1, 2, 4]
+TOLERANCES = [1]
 WINDOWS = [1, 3]
 INFERENCE_BATCH_SIZE = 2
 
@@ -147,7 +147,6 @@ def non_maximum_supression(pred, window, threshold = 0.0):
                 class_window = window[i]
                 i += 1
             while(len(v) > 0):
-                print(f"Current v size: {len(v)}")
                 e1 = max(v, key=lambda x:x['score'])
                 if e1['score'] < threshold:
                     break
@@ -223,9 +222,8 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
             
         if batch_size > 1:
             # Batched by dataloader
-            logger.debug(f"clip: {clip}")
+            logger.info(f"clip: {clip}")
             _, batch_pred_scores = model.predict(clip['frame'])
-            logger.debug(f"batch_pred_scores: {batch_pred_scores}")
 
             for i in range(clip['frame'].shape[0]):
                 video = clip['video'][i]
@@ -279,34 +277,34 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
         process_frame_predictions(dataset, classes, pred_dict, high_recall_score_threshold=0.01)
 
     if not test:
-        pred_events_high_recall = non_maximum_supression(pred_events_high_recall, window = windows[0], threshold = 0.05)
+        pred_events_high_recall = soft_non_maximum_supression(pred_events_high_recall, window = windows[0], threshold = 0.01)
         mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall, tolerances=tolerances, printed = True)
         avg_mAP = np.mean(mAPs)
         return avg_mAP
     
     else:
 
-        print('=== Results on {} (w/o NMS) ==='.format(split))
-        print('Error (frame-level): {:0.2f}\n'.format(err.get() * 100))
+        # print('=== Results on {} (w/o NMS) ==='.format(split))
+        # print('Error (frame-level): {:0.2f}\n'.format(err.get() * 100))
 
-        def get_f1_tab_row(str_k):
-            k = classes[str_k] if str_k != 'any' else None
-            return [str_k, f1.get(k) * 100, *f1.tp_fp_fn(k)]
-        rows = [get_f1_tab_row('any')]
-        for c in sorted(classes):
-            rows.append(get_f1_tab_row(c))
+        # def get_f1_tab_row(str_k):
+        #     k = classes[str_k] if str_k != 'any' else None
+        #     return [str_k, f1.get(k) * 100, *f1.tp_fp_fn(k)]
+        # rows = [get_f1_tab_row('any')]
+        # for c in sorted(classes):
+        #     rows.append(get_f1_tab_row(c))
 
-        print(tabulate(rows, headers=['Exact frame', 'F1', 'TP', 'FP', 'FN'],
-                        floatfmt='0.2f'))
-        print()
+        # print(tabulate(rows, headers=['Exact frame', 'F1', 'TP', 'FP', 'FN'],
+        #                 floatfmt='0.2f'))
+        # print()
 
-        mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall, tolerances=tolerances, printed = printed)
-        avg_mAP = np.mean(mAPs)
+        # mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall, tolerances=tolerances, printed = printed)
+        # avg_mAP = np.mean(mAPs)
 
-        print('=== Results on {} (w/ NMS{}) ==='.format(split, str(windows[0])))
-        pred_events_high_recall_nms = non_maximum_supression(pred_events_high_recall, window = windows[0], threshold=0.01)
-        mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall_nms, tolerances=tolerances, printed = printed)
-        avg_mAP_nms = np.mean(mAPs)
+        # print('=== Results on {} (w/ NMS{}) ==='.format(split, str(windows[0])))
+        # pred_events_high_recall_nms = non_maximum_supression(pred_events_high_recall, window = windows[0], threshold=0.01)
+        # mAPs, _ = compute_mAPs(dataset.labels, pred_events_high_recall_nms, tolerances=tolerances, printed = printed)
+        # avg_mAP_nms = np.mean(mAPs)
 
         print('=== Results on {} (w/ SNMS{}) ==='.format(split, str(windows[1])))
         pred_events_high_recall_snms = soft_non_maximum_supression(pred_events_high_recall, window = windows[1], threshold=0.01)
@@ -314,16 +312,16 @@ def evaluate(model, dataset, split, classes, save_pred=None, printed = True,
         avg_mAP_snms = np.mean(mAPs)
 
 
-        if avg_mAP_snms > avg_mAP_nms:
-            print('Storing predictions with SNMS')
-            pred_events_high_recall_store = pred_events_high_recall_snms
-        else:
-            print('Storing predictions with NMS')
-            pred_events_high_recall_store = pred_events_high_recall_nms
+        # if avg_mAP_snms > avg_mAP_nms:
+        #     print('Storing predictions with SNMS')
+        #     pred_events_high_recall_store = pred_events_high_recall_snms
+        # else:
+        #     print('Storing predictions with NMS')
+        #     pred_events_high_recall_store = pred_events_high_recall_nms
         
         if save_pred is not None:
             if not os.path.exists('/'.join(save_pred.split('/')[:-1])):
                 os.makedirs('/'.join(save_pred.split('/')[:-1]))
-            store_json(save_pred + '.json', pred_events_high_recall_store)
+            store_json(save_pred + '.json', pred_events_high_recall_snms)
 
         return avg_mAP_snms
