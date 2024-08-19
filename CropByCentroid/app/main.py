@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import torch
 
 from PIL import Image
 from ultralytics import YOLO
@@ -76,7 +77,7 @@ def add_xy_position(recognition, positions) -> None:
     
     positions.append(xy_pairs)
 
-def plot_centroid(frame, position, frame_index) -> None:
+def plot_centroid(frame, position):
     x = position[0]
     y = position[1]
     
@@ -85,11 +86,9 @@ def plot_centroid(frame, position, frame_index) -> None:
     thickness = -1  # 塗りつぶし
 
     cv2.circle(frame, (int(x),int(y)), radius, color, thickness)
-    file_name = f"app/output/plot_frames/frame_{frame_index:05d}.jpg"
+    return frame
 
-    cv2.imwrite(file_name, frame)
-
-def crop(frame, position, frame_index) -> None:
+def crop(frame, position):
     x = position[0]
     y = position[1]
 
@@ -97,24 +96,32 @@ def crop(frame, position, frame_index) -> None:
     frame_pil = Image.fromarray(frame_rgb)
 
     crop_frame = frame_pil.crop((x-270, y-270, x+270, y+270))
-    crop_frame.save(f'app/output/crop_frames/frame_{frame_index:05d}.jpg')
+
+    crop_frame = np.array(crop_frame)
+    crop_frame = cv2.cvtColor(crop_frame, cv2.COLOR_RGB2BGR)
+    return crop_frame
 
 
 def main():
-    model = YOLO("../models/yolov10x.pt")
+    print(torch.cuda.is_available())  
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = YOLO("./models/yolov10x.pt").to(device)
+
     cap = cv2.VideoCapture("app/data/movie.mp4")
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     positions = []
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
-            recognition = model(frame)
-            add_xy_position(recognition, positions)
-        else:
-            break
-            
+    with tqdm(total=frame_count, desc="Processing Calculate Centroid", unit="frame") as pbar:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                recognition = model.predict(frame, device=device, verbose=False)
+                add_xy_position(recognition, positions)
+                pbar.update(1)  # 進捗バーを1つ進める
+            else:
+                break
+                
     cap.release()
     print(f"Total Frame: {frame_count}")
     print(f"len positions: {len(positions)}")
@@ -125,20 +132,28 @@ def main():
     smoothed_positions = smoothing(centroid_positions=centroids, sigma=3)
 
     cap = cv2.VideoCapture("app/data/movie.mp4")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    crop_frame_size = (540, 540)
+    
+    out = cv2.VideoWriter('app/output/crop_video/output_video.mp4', fourcc, fps, crop_frame_size)
     frame_index = 0
-    with tqdm(total=frame_count) as pbar:
+    with tqdm(total=frame_count, desc="Processing Crop", unit="frame") as pbar:
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
                 position = smoothed_positions[frame_index]
-                plot_centroid(frame, position, frame_index)
-                crop(frame, position, frame_index)
+                frame = plot_centroid(frame, position)
+                frame = crop(frame, position)
+                
+                out.write(frame)
 
                 frame_index += 1
                 pbar.update(1)
             else:
                 break
     cap.release()
+    out.release()
 
 if __name__ == '__main__':
     main()
