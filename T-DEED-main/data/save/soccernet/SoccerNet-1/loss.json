@@ -1,14 +1,56 @@
 [
   {
     "epoch": 0,
-    "train": 12.711177444458007,
-    "val": 13.837019920349121,
+    "train": 2.233147806805074,
+    "val": 2.023102820817232,
     "val_mAP": 0
   },
   {
     "epoch": 1,
-    "train": 10.47855281829834,
-    "val": 32.62099075317383,
-    "val_mAP": 0.0005136017991446728
+    "train": 2.8250521929885353,
+    "val": 2.161796002202332,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 2,
+    "train": 2.1275636852341706,
+    "val": 1.998201464600563,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 3,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 4,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 5,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 6,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 7,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
+  },
+  {
+    "epoch": 8,
+    "train": NaN,
+    "val": NaN,
+    "val_mAP": 0
   }
 ]

@@ -20,7 +20,7 @@ from original_src.logger_config import logger
 #Constants
 TOLERANCES = [1]
 WINDOWS = [1, 3]
-INFERENCE_BATCH_SIZE = 2
+INFERENCE_BATCH_SIZE = 1
 
 class ErrorStat:
 

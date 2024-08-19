@@ -1,0 +1,16 @@
+CropByCentroid/app/output
+CropByCentroid/app/data
+CropByCentroid/models/
+CropByCentroid/.env/
+
+T-DEED-main/.env
+T-DEED-main/data/soccernet
+T-DEED-main/checkpoints/SoccerNet
+T-DEED-main/data/West
+
+
+Baseline/*.json
+Baseline/*.npz
+Baseline/.baseline/
+
+__pycache__/

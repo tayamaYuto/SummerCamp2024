@@ -10,7 +10,7 @@ from util.dataset import load_classes
 from dataset.frame import ActionSpotDataset, ActionSpotVideoDataset
 
 #Constants
-STRIDE = 1
+STRIDE = 2
 
 def get_datasets(args):
     classes = load_classes(os.path.join('data', args.dataset, 'class.txt'))
