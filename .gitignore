@@ -13,4 +13,9 @@ Baseline/*.json
 Baseline/*.npz
 Baseline/.baseline/
 
+BallDetection/.env/
+BallDetection/input/
+BallDetection/output/
+BallDetection/models
+
 __pycache__/
