@@ -1,3 +1,4 @@
 ultralytics
 tqdm
 pillow
+scipy

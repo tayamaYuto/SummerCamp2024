@@ -4,6 +4,7 @@ import os
 import torch
 
 from PIL import Image
+from scipy.ndimage import gaussian_filter
 from ultralytics import YOLO
 from tqdm import tqdm
 
@@ -125,7 +126,7 @@ def main():
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
-                    recognition = model.predict(frame, device=device, verbose=False)
+                    recognition = model.predict(frame, conf=0.001, device=device, verbose=False)
 
 
                     boxes =   recognition[0].boxes.xywh.tolist()
@@ -145,6 +146,8 @@ def main():
         
         #線形補完によって各フレームでのクロップ画像の中心点を決定する
         center_list = liner_suppliment_center(center_list, frame_index-1)
+        center_list = np.array(center_list)
+        center_list = gaussian_filter(center_list.astype(float), sigma=1).tolist()
 
         cap = cv2.VideoCapture(file_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -152,7 +155,7 @@ def main():
         
 
         output_folder = "./output"
-        output_path = os.path.join(output_folder, "crop_"+ basename)
+        output_path = os.path.join(output_folder, "normal_crop_"+ basename)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_path, fourcc, fps, (540,540), isColor=True)
 

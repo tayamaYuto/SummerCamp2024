@@ -19,3 +19,5 @@ BallDetection/output/
 BallDetection/models
 
 __pycache__/
+
+*.txt
