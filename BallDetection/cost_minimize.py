@@ -2,12 +2,55 @@ import cv2
 import os
 import numpy as np
 import heapq
-import json
 
-from PIL import Image
 from scipy.ndimage import gaussian_filter
 from ultralytics import YOLO
 from tqdm import tqdm
+
+
+class VideoProcessor:
+    def __init__(self, file_path):
+        self.cap = cv2.VideoCapture(file_path)
+
+    def video_info(self):
+        self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+    
+    def output_info(self):
+        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+class ImageProcessor:
+    def plot_center(self, frame, x, y):
+
+        color = (0, 0, 255)  # BGR形式で赤色
+        radius = 2  # 点の半径
+        thickness = -1  # 塗りつぶし
+
+        cv2.circle(frame, (x, y), radius, color, thickness)
+        return frame
+
+    def crop(self, frame, x, y, crop_size=540):
+        half_size = crop_size // 2
+        
+        x_min = int(max(0, x - half_size))
+        x_max = int(min(frame.shape[1], x + half_size))
+        
+        y_min = int(max(0, y - half_size))
+        y_max = int(min(frame.shape[0], y + half_size))
+        
+        # クロップ範囲が crop_size に満たない場合の調整
+        if x_max - x_min < crop_size:
+            x_min = max(0, x_max - crop_size)
+        if y_max - y_min < crop_size:
+            y_min = max(0, y_max - crop_size)
+        
+        crop_frame = frame[y_min:y_max, x_min:x_max]
+        
+        return crop_frame
+    
+class CostMinimization:
+    def __init__(self):
+        return None
 
 
 def interpolate_zeros(bboxes):
@@ -50,17 +93,11 @@ def plot_center(frame, center_x, center_y) :
 
     return frame
 
-def get_first_ball_position(confs, bboxes):
-    candidates = confs[0]
+def establish_ball_position(confs, bboxes, position):
+    candidates = confs[position]
     max_value = max(candidates)
     max_index = candidates.index(max_value)
-    return bboxes[0][max_index]
-
-def get_last_ball_position(confs, bboxes):
-    candidates = confs[-1]
-    max_value = max(candidates)
-    max_index = candidates.index(max_value)
-    return bboxes[-1][max_index]
+    return bboxes[position][max_index]
 
 
 def get_null_frames(bboxes):
@@ -151,15 +188,22 @@ def dijkstra(edges, num_node, Goal):
 
     return []
 
-def crop(frame, center_x, center_y):
-
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame_pil = Image.fromarray(frame_rgb)
-
-    crop_frame = frame_pil.crop((center_x-270, center_y-270, center_x+270, center_y+270))
-
-    crop_frame = np.array(crop_frame)
-    crop_frame = cv2.cvtColor(crop_frame, cv2.COLOR_RGB2BGR)
+def crop(frame, x, y, crop_size=540):
+    half_size = crop_size // 2
+    
+    x_min = int(max(0, x - half_size))
+    x_max = int(min(frame.shape[1], x + half_size))
+    
+    y_min = int(max(0, y - half_size))
+    y_max = int(min(frame.shape[0], y + half_size))
+    
+    # クロップ範囲が crop_size に満たない場合の調整
+    if x_max - x_min < crop_size:
+        x_min = max(0, x_max - crop_size)
+    if y_max - y_min < crop_size:
+        y_min = max(0, y_max - crop_size)
+    
+    crop_frame = frame[y_min:y_max, x_min:x_max]
     
     return crop_frame
 
@@ -215,8 +259,8 @@ def main():
         null_frames, bboxes = get_null_frames(bboxes)
         print(null_frames)
 
-        bboxes[0] = np.array([get_first_ball_position(confs, bboxes)])
-        bboxes[-1] = np.array([get_last_ball_position(confs, bboxes)])
+        bboxes[0] = np.array([establish_ball_position(confs, bboxes, 0)])
+        bboxes[-1] = np.array([establish_ball_position(confs, bboxes, -1)])
         distances = calc_distance_between_nodes(bboxes)
 
         total_nodes = count_total_elements(distances)
