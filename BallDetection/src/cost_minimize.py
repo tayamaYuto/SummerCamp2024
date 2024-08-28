@@ -116,6 +116,19 @@ class CostMinimization:
 
         crop_bboxes = self._get_bbox(bbox_index)
 
+        distance_list = []
+        for i, _ in enumerate(crop_bboxes[:-1]):
+            distance = np.linalg.norm(crop_bboxes[i + 1][:2] - crop_bboxes[i][:2],ord=2)
+            distance_list.append(distance)
+        
+        distance_list_np=np.array(distance_list)
+        avg_distance = np.mean(distance_list_np)
+
+        for i , distance in enumerate(distance_list):
+            if distance >  avg_distance:
+                crop_bboxes[i+1]=np.array([0, 0, 0, 0])
+
+
         values_to_insert = np.array([0, 0, 0, 0])
 
         for index in null_frames:

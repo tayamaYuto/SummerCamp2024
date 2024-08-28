@@ -15,14 +15,26 @@ from src.logger_config import logger
 
 
 def main():
-    dir_path = "./input"
-    files = os.listdir(dir_path)
-    files = [i for i in files if i.endswith('.mp4') == True]
+    input_path = "./input/test"
+    output_path = "./output"
+    os.makedirs(output_path, exist_ok=True)
+
+    mp4_path_list = []
+
+    # inputフォルダ内を再帰的に走査
+    for root, dirs, files in os.walk(input_path):
+        for file in files:
+            # ファイルが.mp4であり、ファイル名に"720p"が含まれているかどうかをチェック
+            if file.endswith('.mp4') and '720p' in file:
+                # 条件に一致する.mp4ファイルのフルパスを取得
+                full_path = os.path.join(root, file)
+                mp4_path_list.append(full_path)
 
 
-    for video in files:
-        basename = os.path.basename(video)
-        video_path = os.path.join(dir_path, video)
+    for video_path in mp4_path_list:
+        folder_name = os.path.relpath(os.path.dirname(video_path), input_path)
+        output_folder_path = os.path.join(output_path, folder_name)
+        os.makedirs(output_folder_path, exist_ok=True)
         scene_detector = SceneDetector(video_path, 30)
         video_processor = VideoProcessor(video_path)
 
@@ -90,9 +102,7 @@ def main():
         fps = out_video_processor.fps
         fourcc = out_video_processor.output_info()
 
-        output_folder = "./output"
-        output_path = os.path.join(output_folder, "crop_"+ basename)
-        out = cv2.VideoWriter(output_path, fourcc, fps, (540, 540), isColor=True)
+        out = cv2.VideoWriter(f"{output_folder_path}/540p.mp4", fourcc, fps, (540, 540), isColor=True)
 
         total_out_bboxes = np.concatenate(total_out_bboxes)
         logger.debug(len(total_out_bboxes))
@@ -100,8 +110,6 @@ def main():
 
         frame_index = 0
         out_count = 0
-        output_dir = "output/output_frames"  # 保存先ディレクトリを指定
-        os.makedirs(output_dir, exist_ok=True)
         height, width = 540, 540
         with tqdm(total=frame_count) as pbar:
             while cap.isOpened():
