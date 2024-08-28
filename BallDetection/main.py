@@ -1,4 +1,5 @@
 # global
+import time
 import os
 import cv2
 import numpy as np
@@ -28,13 +29,13 @@ def main():
         start_frame_list = scene_detector.get_scene_change_frame()
         cap = video_processor.cap
         frame_count = video_processor.frame_count
-        # cap = cv2.VideoCapture(video_path)
-        # frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         logger.debug(f"frame count:{frame_count}")
 
         total_out_bboxes = []
 
-        if not start_frame_list:
+        if start_frame_list:
+            start_frame_list.append(frame_count)
+        else:
             start_frame_list = [0, frame_count]
 
         for i in range(len(start_frame_list) - 1):
@@ -81,8 +82,8 @@ def main():
             minimization_processor = CostMinimization(confs, bboxes)
             output_bboxes = minimization_processor.process_cost_minimization()
             total_out_bboxes.append(output_bboxes)
+        cap.release()
 
-        cap.release()    
         image_processor = ImageProcessor()
         out_video_processor = VideoProcessor(video_path)
         cap = out_video_processor.cap
@@ -93,28 +94,44 @@ def main():
         output_path = os.path.join(output_folder, "crop_"+ basename)
         out = cv2.VideoWriter(output_path, fourcc, fps, (540, 540), isColor=True)
 
-        frame_index = 0
-        total_out_bboxes = np.array(total_out_bboxes)
-        logger.debug(len(total_out_bboxes[0]))
-        assert len(total_out_bboxes[0]) == frame_count, "Error: total_out_bboxes length does not match the frame count."
+        total_out_bboxes = np.concatenate(total_out_bboxes)
+        logger.debug(len(total_out_bboxes))
+        assert len(total_out_bboxes) == frame_count, "Error: total_out_bboxes length does not match the frame count."
 
+        frame_index = 0
+        out_count = 0
+        output_dir = "output/output_frames"  # 保存先ディレクトリを指定
+        os.makedirs(output_dir, exist_ok=True)
+        height, width = 540, 540
         with tqdm(total=frame_count) as pbar:
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
                     break
+
                 x = total_out_bboxes[frame_index][0]
                 y = total_out_bboxes[frame_index][1]
 
-                out.write(image_processor.crop(frame, x, y))
+                cropped_frame = image_processor.crop(frame, x, y)
+
+                if cropped_frame.shape[1] == width and cropped_frame.shape[0] == height:
+                    out_count += 1
+
+                out.write(cropped_frame)
                 frame_index += 1
                 pbar.update(1)
+
+        logger.info(f"out count:{out_count}")
         cap.release()
         out.release()
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"処理が終了しました。処理時間: {elapsed_time:.2f}秒")
 
 
 

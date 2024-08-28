@@ -123,7 +123,7 @@ class CostMinimization:
         logger.debug(f"type crop_bboxes: {type(crop_bboxes[0])}")
         logger.debug(f"shape of crop bboxes: {crop_bboxes.shape}")
         crop_bboxes = self.linear_interpolation.interpolate_zeros(crop_bboxes)
-        bboxes_smoothed = gaussian_filter(crop_bboxes.astype(float), sigma=0.5)
+        bboxes_smoothed = gaussian_filter(crop_bboxes.astype(float), sigma=0.75)
         return bboxes_smoothed
     
     def _get_opt_index(self, opt_root, node_offset_list):
