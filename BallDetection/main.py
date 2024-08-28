@@ -41,7 +41,7 @@ def main():
             start_frame = start_frame_list[i]
             end_frame = start_frame_list[i + 1]
 
-            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            
             model = YoloModel().load_model()
 
             bboxes = []
@@ -49,9 +49,10 @@ def main():
             clss = []
             with tqdm(total=end_frame - start_frame, desc=f"Processing Interval {i+1}/{len(start_frame_list)-1}", unit="frame") as pbar:
                 frame_index = start_frame
-                while frame_index <= end_frame:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+                while frame_index < end_frame:
                     ret, frame = cap.read()
-                    if ret:
+                    if not ret:
                         logger.warning(f"Failed to read frame at index {frame_index}")
                         break
                     recognition = model.predict(frame, conf=0.001, verbose=False, classes=[1])
@@ -75,17 +76,18 @@ def main():
 
                     frame_index += 1
                     pbar.update(1)
-            cap.release()
 
+            logger.debug(f"Fist input box type:{type(bboxes[0])}")
             minimization_processor = CostMinimization(confs, bboxes)
             output_bboxes = minimization_processor.process_cost_minimization()
             total_out_bboxes.append(output_bboxes)
-            
+
+        cap.release()    
         image_processor = ImageProcessor()
         out_video_processor = VideoProcessor(video_path)
         cap = out_video_processor.cap
         fps = out_video_processor.fps
-        fourcc = out_video_processor.fourcc
+        fourcc = out_video_processor.output_info()
 
         output_folder = "./output"
         output_path = os.path.join(output_folder, "crop_"+ basename)

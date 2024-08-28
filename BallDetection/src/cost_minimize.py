@@ -94,6 +94,7 @@ class CostMinimization:
         return []
     
     def process_cost_minimization(self):
+        crop_bboxes = np.array([])
         logger.debug(len(self.bboxes))
         null_frames, not_null_frames = self._get_null_frames()
         self.bboxes = not_null_frames
@@ -115,12 +116,12 @@ class CostMinimization:
 
         crop_bboxes = self._get_bbox(bbox_index)
 
-        values_to_insert = [0, 0, 0, 0]
-        logger.debug(len(null_frames))
-        logger.debug(len(crop_bboxes))
+        values_to_insert = np.array([0, 0, 0, 0])
+
         for index in null_frames:
             crop_bboxes = np.insert(crop_bboxes, index, values_to_insert, axis=0)
-        
+        logger.debug(f"type crop_bboxes: {type(crop_bboxes[0])}")
+        logger.debug(f"shape of crop bboxes: {crop_bboxes.shape}")
         crop_bboxes = self.linear_interpolation.interpolate_zeros(crop_bboxes)
         bboxes_smoothed = gaussian_filter(crop_bboxes.astype(float), sigma=0.5)
         return bboxes_smoothed
@@ -134,6 +135,8 @@ class CostMinimization:
     
     def _get_bbox(self, bbox_index):
         result = []
+        logger.debug(f"Input box type :{self.bboxes[0][0]}")
         for index, bbox in zip(bbox_index, self.bboxes):
             result.append(bbox[index])
+        result = np.array(result)
         return result
