@@ -1,4 +1,5 @@
 # global
+import time
 import os
 import cv2
 import numpy as np
@@ -14,34 +15,90 @@ from src.logger_config import logger
 
 
 def main():
-    dir_path = "./input"
-    files = os.listdir(dir_path)
-    files = [i for i in files if i.endswith('.mp4') == True]
+    input_path = "./input/test"
+    output_path = "./output"
+    os.makedirs(output_path, exist_ok=True)
+
+    mp4_path_list = []
+
+    # inputフォルダ内を再帰的に走査
+    for root, dirs, files in os.walk(input_path):
+        for file in files:
+            # ファイルが.mp4であり、ファイル名に"720p"が含まれているかどうかをチェック
+            if file.endswith('.mp4') and '720p' in file:
+                # 条件に一致する.mp4ファイルのフルパスを取得
+                full_path = os.path.join(root, file)
+                mp4_path_list.append(full_path)
 
 
-    for video in files:
-        video_path = os.path.join(dir_path, video)
+    for video_path in mp4_path_list:
+        folder_name = os.path.relpath(os.path.dirname(video_path), input_path)
+        output_folder_path = os.path.join(output_path, folder_name)
+        os.makedirs(output_folder_path, exist_ok=True)
+        scene_detector = SceneDetector(video_path, 30)
         video_processor = VideoProcessor(video_path)
 
+        start_frame_list = scene_detector.get_scene_change_frame()
         cap = video_processor.cap
         frame_count = video_processor.frame_count
-        # cap = cv2.VideoCapture(video_path)
-        # frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         logger.debug(f"frame count:{frame_count}")
 
-        start_frame_list = []
-        if not start_frame_list:
+        total_out_bboxes = []
+
+        if start_frame_list:
+            start_frame_list.append(frame_count)
+        else:
             start_frame_list = [0, frame_count]
 
         for i in range(len(start_frame_list) - 1):
             start_frame = start_frame_list[i]
             end_frame = start_frame_list[i + 1]
-            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
+            
+            model = YoloModel().load_model()
+
+            bboxes = []
+            confs = []
+            clss = []
             with tqdm(total=end_frame - start_frame, desc=f"Processing Interval {i+1}/{len(start_frame_list)-1}", unit="frame") as pbar:
                 frame_index = start_frame
-                
+                cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
                 while frame_index < end_frame:
                     ret, frame = cap.read()
                     if not ret:
                         logger.warning(f"Failed to read frame at index {frame_index}")
                         break
+                    recognition = model.predict(frame, conf=0.001, verbose=False, classes=[1])
+
+                    bbox = recognition[0].boxes.xywh.tolist()
+                    if len(bbox) == 0:
+                        bbox = [[0, 0, 0, 0]]
+                        bbox = np.array(bbox)
+                        bboxes.append(bbox)
+
+
+                        frame_index += 1
+                        pbar.update(1)
+                        continue
+
+                    bbox = np.array(bbox)
+                    cls = recognition[0].boxes.cls.tolist()
+                    conf = recognition[0].boxes.conf.tolist()
+
+                    bboxes.append(bbox)
+                    clss.append(cls)
+                    confs.append(conf)
+
+                    frame_index += 1
+                    pbar.update(1)
+
+            logger.debug(f"Fist input box type:{type(bboxes[0])}")
+            minimization_processor = CostMinimization(confs, bboxes)
+            output_bboxes = minimization_processor.process_cost_minimization()
+
+if __name__ == '__main__':
+    start_time = time.time()
+    main()
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"処理が終了しました。処理時間: {elapsed_time:.2f}秒")

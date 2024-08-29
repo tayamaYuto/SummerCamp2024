@@ -75,6 +75,8 @@ def main():
                         bbox = [[0, 0, 0, 0]]
                         bbox = np.array(bbox)
                         bboxes.append(bbox)
+
+
                         frame_index += 1
                         pbar.update(1)
                         continue

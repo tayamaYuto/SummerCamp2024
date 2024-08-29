@@ -36,8 +36,26 @@ class CostMinimization:
             
             # 各フレーム内の全てのノード間の距離を計算
             subset_distance = np.linalg.norm(points2[:, np.newaxis, :] - points1, axis=2)
+            
             distances_between_nodes.append(subset_distance)
         
+        np_conf = [np.array(conf) for conf in self.confs]
+
+        distance_and_confidence = []
+        for i, distance in enumerate(distances_between_nodes):
+
+            weight = 1 - np_conf[i + 1]
+            weight_reshaped = weight[:, np.newaxis]
+
+            try:
+                np.broadcast_shapes(distance.shape, weight_reshaped.shape)
+            except ValueError as e:
+                logger.debug(f"ブロードキャストできません: {e}")
+                raise
+
+            sub_distance_confidence = distance * weight_reshaped
+            distance_and_confidence.append(sub_distance_confidence)
+
         return distances_between_nodes
 
     def _count_total_elements(self, distances):
@@ -61,6 +79,7 @@ class CostMinimization:
                 node_number_and_value = [[i + fixed_value, value] for i, value in enumerate(dis)]
                 result.append(node_number_and_value)
         result.append([])
+        logger.debug(f"fixed value:{fixed_value}")
         return result, node_offset_list
 
     def _dijkstra(self, edges, num_node, Goal):
@@ -105,7 +124,9 @@ class CostMinimization:
 
         distances = self._calc_distance_between_nodes()
         total_nodes = self._count_total_elements(distances)
+        logger.debug(f"total nodes:{total_nodes}")
         edges, node_offset_list = self._create_edges(distances)
+
 
         # ダイクストラ法計算
         opt_root, _ = self._dijkstra(edges, total_nodes + 1, total_nodes)
@@ -118,7 +139,7 @@ class CostMinimization:
 
         distance_list = []
         for i, _ in enumerate(crop_bboxes[:-1]):
-            distance = np.linalg.norm(crop_bboxes[i + 1][:2] - crop_bboxes[i][:2],ord=2)
+            distance = np.linalg.norm(crop_bboxes[i + 1][:2] - crop_bboxes[i][:2], ord=2)
             distance_list.append(distance)
         
         distance_list_np=np.array(distance_list)
@@ -128,20 +149,17 @@ class CostMinimization:
             if distance >  avg_distance:
                 crop_bboxes[i+1]=np.array([0, 0, 0, 0])
 
-
         values_to_insert = np.array([0, 0, 0, 0])
 
         for index in null_frames:
             crop_bboxes = np.insert(crop_bboxes, index, values_to_insert, axis=0)
-        logger.debug(f"type crop_bboxes: {type(crop_bboxes[0])}")
-        logger.debug(f"shape of crop bboxes: {crop_bboxes.shape}")
         crop_bboxes = self.linear_interpolation.interpolate_zeros(crop_bboxes)
         bboxes_smoothed = gaussian_filter(crop_bboxes.astype(float), sigma=0.75)
         return bboxes_smoothed
     
     def _get_opt_index(self, opt_root, node_offset_list):
-        node_numbers = np.array(opt_root)
-        fix_number = np.array(node_offset_list)
+        node_numbers = np.array(opt_root).astype(int)
+        fix_number = np.array(node_offset_list).astype(int)
 
         bbox_index = node_numbers[1: len(fix_number) + 1] - fix_number
         return bbox_index
@@ -150,6 +168,9 @@ class CostMinimization:
         result = []
         logger.debug(f"Input box type :{self.bboxes[0][0]}")
         for index, bbox in zip(bbox_index, self.bboxes):
+            if not isinstance(index, (int, slice)):
+                raise TypeError(f"Invalid index type: {type(index)}. Expected int or slice.")
+
             result.append(bbox[index])
         result = np.array(result)
         return result
