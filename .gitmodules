@@ -1,0 +1,3 @@
+[submodule "BallDetection/BallDetection/yolov10"]
+	path = BallDetection/BallDetection/yolov10
+	url = https://github.com/THU-MIG/yolov10.git
