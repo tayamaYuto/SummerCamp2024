@@ -27,7 +27,7 @@ def calculate_centroid(positions, direction_vectors):
 
         direction_vector_adjusted = np.array([
             direction_vector[0] * 1,  # x軸の倍率
-            direction_vector[1] * -10   # y軸の倍率
+            direction_vector[1] * - 10   # y軸の倍率
         ])
 
         corrected_centroid = current_centroid + direction_vector_adjusted
@@ -105,9 +105,9 @@ def crop(frame, position):
 def main():
     print(torch.cuda.is_available())  
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = YOLO("./models/yolov10x.pt").to(device)
+    model = YOLO("./models/best_ver1.pt").to(device)
 
-    cap = cv2.VideoCapture("app/data/movie.mp4")
+    cap = cv2.VideoCapture("app/data/movie20min.mp4")
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     positions = []
@@ -116,7 +116,7 @@ def main():
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
-                recognition = model.predict(frame, device=device, verbose=False)
+                recognition = model.predict(frame, device=device, verbose=False, classes=[0], imgsz=(736, 1088))
                 add_xy_position(recognition, positions)
                 pbar.update(1)  # 進捗バーを1つ進める
             else:
@@ -132,7 +132,7 @@ def main():
     smoothed_positions = smoothing(centroid_positions=centroids, sigma=3)
 
     cap = cv2.VideoCapture("app/data/movie.mp4")
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     fps = cap.get(cv2.CAP_PROP_FPS)
     crop_frame_size = (540, 540)
     
